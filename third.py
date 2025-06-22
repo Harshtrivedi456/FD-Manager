@@ -29,33 +29,35 @@ if not st.session_state.authenticated:
 # Load FD data
 @st.cache_data
 
+# Load FD data
+@st.cache_data
 def load_data():
-uploaded_file = st.file_uploader("📁 Upload FD Excel File", type=["xlsx"])
+    uploaded_file = st.file_uploader("📁 Upload FD Excel File", type=["xlsx"])
+    if uploaded_file is not None:
+        df = pd.read_excel(uploaded_file, sheet_name=0)
+        df = df.rename(columns={
+            'Bank Name': 'Bank',
+            'fisrt Name': 'Initial',
+            'Deposit Amt': 'DA',
+            'Maturity Amt': 'MA',
+            'Deposit Date': 'DA_Date',
+            'Interest': 'Interest',
+            'Customer Name': 'Customer',
+            'FDR NO': 'FDR_NO'
+        })
+        df = df[['Customer', 'Initial', 'Bank', 'DA', 'MA', 'DA_Date', 'Interest', 'FDR_NO']]
+        df['DA'] = pd.to_numeric(df['DA'], errors='coerce')
+        df['MA'] = pd.to_numeric(df['MA'], errors='coerce')
+        df['Interest'] = pd.to_numeric(df['Interest'], errors='coerce')
+        df['DA_Date'] = pd.to_datetime(df['DA_Date'], errors='coerce')
+        df = df.dropna(subset=['Customer', 'Initial', 'Bank', 'DA', 'MA', 'DA_Date', 'Interest'])
+        if 'MA_Date' not in df.columns:
+            df['MA_Date'] = df['DA_Date'] + pd.DateOffset(months=60)
+        return df
+    else:
+        st.warning("Please upload the FD Excel file to proceed.")
+        st.stop()
 
-if uploaded_file is not None:
-    df = pd.read_excel(uploaded_file, sheet_name=0)
-else:
-    st.warning("Please upload the FD Excel file to proceed.")
-    st.stop()
-    df = df.rename(columns={
-        'Bank Name': 'Bank',
-        'fisrt Name': 'Initial',
-        'Deposit Amt': 'DA',
-        'Maturity Amt': 'MA',
-        'Deposit Date': 'DA_Date',
-        'Interest': 'Interest',
-        'Customer Name': 'Customer',
-        'FDR NO': 'FDR_NO'
-    })
-    df = df[['Customer', 'Initial', 'Bank', 'DA', 'MA', 'DA_Date', 'Interest', 'FDR_NO']]
-    df['DA'] = pd.to_numeric(df['DA'], errors='coerce')
-    df['MA'] = pd.to_numeric(df['MA'], errors='coerce')
-    df['Interest'] = pd.to_numeric(df['Interest'], errors='coerce')
-    df['DA_Date'] = pd.to_datetime(df['DA_Date'], errors='coerce')
-    df = df.dropna(subset=['Customer', 'Initial', 'Bank', 'DA', 'MA', 'DA_Date', 'Interest'])
-    if 'MA_Date' not in df.columns:
-        df['MA_Date'] = df['DA_Date'] + pd.DateOffset(months=60)
-    return df
 
 # Save Data
 
