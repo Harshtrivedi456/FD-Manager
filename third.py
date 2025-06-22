@@ -26,9 +26,6 @@ if not st.session_state.authenticated:
 
 
 
-
-# Load FD data
-@st.cache_data
 # ⬇️ Upload file at the top level
 uploaded_file = st.file_uploader("📁 Upload FD Excel File", type=["xlsx"])
 
