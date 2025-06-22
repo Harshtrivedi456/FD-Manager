@@ -75,7 +75,7 @@ if name_input:
             st.write("**Total for", bank, ":**")
             st.write(group[['DA', 'MA', 'Interest']].sum())
     else:
-        filtered_df = df[(df['Initial'] == name_input) | (df['Customer'].str.upper() == name_input)]
+        filtered_df = df[(df['Initial'].str.upper() == name_input) | (df['Customer'].str.upper() == name_input)]
         if not filtered_df.empty:
             filtered_df['Maturity Status'] = filtered_df['MA_Date'].apply(
                 lambda x: '⚠️ Maturing Soon' if x - pd.Timestamp(datetime.now()) < timedelta(days=30) else '')
