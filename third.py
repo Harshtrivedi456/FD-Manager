@@ -5,10 +5,19 @@ import io
 
 # 🔐 Password Protection
 st.title("FD Manager")
-password = st.text_input("Enter Password to Access App", type="password")
-if password != "mysecurepass":
-    st.warning("Incorrect password or access not granted.")
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    password = st.text_input("Enter Password to Access App", type="password")
+    if password == "mysecurepass":
+        st.session_state.authenticated = True
+        st.experimental_rerun()
+    elif password:
+        st.warning("Incorrect password. Please try again.")
     st.stop()
+
 
 # Load FD data
 @st.cache_data
