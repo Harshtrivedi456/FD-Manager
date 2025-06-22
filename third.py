@@ -8,15 +8,22 @@ st.title("FD Manager")
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+    st.session_state.attempted = False
 
 if not st.session_state.authenticated:
-    password = st.text_input("Enter Password to Access App", type="password")
-    if password == "mysecurepass":
-        st.session_state.authenticated = True
-        st.experimental_rerun()
-    elif password:
+    with st.form("auth_form"):
+        password = st.text_input("Enter Password to Access App", type="password")
+        submitted = st.form_submit_button("Login")
+        if submitted:
+            st.session_state.attempted = True
+            if password == "mysecurepass":
+                st.session_state.authenticated = True
+
+    if st.session_state.attempted and not st.session_state.authenticated:
         st.warning("Incorrect password. Please try again.")
+
     st.stop()
+
 
 
 # Load FD data
