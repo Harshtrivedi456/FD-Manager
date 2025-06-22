@@ -2,8 +2,6 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
 import io
-import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.express as px
 
 # 🔐 Password Protection
