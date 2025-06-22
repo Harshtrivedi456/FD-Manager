@@ -1,7 +1,14 @@
 import pandas as pd
-import io
 import streamlit as st
 from datetime import datetime, timedelta
+import io
+
+# 🔐 Password Protection
+st.title("FD Manager")
+password = st.text_input("Enter Password to Access App", type="password")
+if password != "mysecurepass":
+    st.warning("Incorrect password or access not granted.")
+    st.stop()
 
 # Load FD data
 @st.cache_data
@@ -32,9 +39,6 @@ def load_data():
 
 def save_data(df):
     df.to_excel("fdr.xlsx", index=False)
-
-# Main UI
-st.title("FD Manager")
 
 # Load current FD data
 df = load_data()
@@ -129,7 +133,7 @@ elif entry_type == "Renew Existing FD":
 # Download updated file
 st.markdown("---")
 st.subheader("Download Updated FD Database")
-# Create in-memory Excel file
+
 output = io.BytesIO()
 with pd.ExcelWriter(output, engine='openpyxl') as writer:
     df.to_excel(writer, index=False)
