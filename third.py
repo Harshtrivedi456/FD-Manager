@@ -30,7 +30,13 @@ if not st.session_state.authenticated:
 @st.cache_data
 
 def load_data():
-    df = pd.read_excel("fdr.xlsx", sheet_name=0)
+uploaded_file = st.file_uploader("📁 Upload FD Excel File", type=["xlsx"])
+
+if uploaded_file is not None:
+    df = pd.read_excel(uploaded_file, sheet_name=0)
+else:
+    st.warning("Please upload the FD Excel file to proceed.")
+    st.stop()
     df = df.rename(columns={
         'Bank Name': 'Bank',
         'fisrt Name': 'Initial',
