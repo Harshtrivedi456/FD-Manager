@@ -26,8 +26,6 @@ if not st.session_state.authenticated:
 
 
 
-# Load FD data
-@st.cache_data
 
 # Load FD data
 @st.cache_data
