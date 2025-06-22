@@ -2,6 +2,9 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
 import io
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
 
 # 🔐 Password Protection
 st.title("FD Manager")
@@ -74,7 +77,7 @@ if name_input:
             st.write("**Total for", bank, ":**")
             st.write(group[['DA', 'MA', 'Interest']].sum())
     else:
-        filtered_df = df[(df['Initial'] == name_input) | (df['Customer'].str.upper().str.contains(name_input))]
+        filtered_df = df[(df['Initial'] == name_input) | (df['Customer'].str.upper() == name_input)]
         if not filtered_df.empty:
             filtered_df['Maturity Status'] = filtered_df['MA_Date'].apply(
                 lambda x: '⚠️ Maturing Soon' if x - pd.Timestamp(datetime.now()) < timedelta(days=30) else '')
@@ -83,69 +86,38 @@ if name_input:
         else:
             st.warning("No records found for that name or initial.")
 
+# 📊 Optional Comparative Analysis
 st.markdown("---")
-st.header("Add or Renew FD Entry")
-entry_type = st.radio("Select Entry Type", ["New FD", "Renew Existing FD"])
+if st.checkbox("📈 Show Comparative Analysis"):
+    st.subheader("Comparative Analysis")
 
-if entry_type == "New FD":
-    with st.form("new_fd_form"):
-        cust_name = st.text_input("Customer Name")
-        initial = st.text_input("Initial (First Letter)")
-        bank = st.text_input("Bank Name")
-        da = st.number_input("Deposit Amount (DA)", min_value=0.0)
-        ma = st.number_input("Maturity Amount (MA)", min_value=0.0)
-        da_date = st.date_input("Deposit Date")
-        ma_date = st.date_input("Maturity Date")
-        interest = st.number_input("Interest Amount", min_value=0.0)
-        fdr_no = st.text_input("FDR Number")
-        submit = st.form_submit_button("Add FD")
-        if submit:
-            new_entry = pd.DataFrame([{
-                'Customer': cust_name,
-                'Initial': initial.upper(),
-                'Bank': bank,
-                'DA': da,
-                'MA': ma,
-                'DA_Date': pd.to_datetime(da_date),
-                'Interest': interest,
-                'FDR_NO': fdr_no,
-                'MA_Date': pd.to_datetime(ma_date)
-            }])
-            df = pd.concat([df, new_entry], ignore_index=True)
-            save_data(df)
-            st.success("New FD added successfully!")
+    st.markdown("**1. Total Interest Earned by Each Customer**")
+    pie1 = px.pie(df, names='Customer', values='Interest', title='Interest by Customer')
+    st.plotly_chart(pie1)
 
-elif entry_type == "Renew Existing FD":
-    with st.form("renew_fd_search_form"):
-        old_fdr = st.text_input("Enter Existing FDR Number to Renew")
-        submit_search = st.form_submit_button("Search FD")
+    st.markdown("**2. Total Deposit Amount (DA) by Bank**")
+    pie2 = px.pie(df, names='Bank', values='DA', title='Deposit Amount by Bank')
+    st.plotly_chart(pie2)
 
-    if submit_search:
-        renewal_found = df[df['FDR_NO'].astype(str).str.strip().str.upper() == str(old_fdr).strip().upper()]
-        if not renewal_found.empty:
-            st.subheader("Old FD Record")
-            st.dataframe(renewal_found)
-            st.info("Old FD found. Please enter new details to renew.")
-            with st.form("renew_details_form"):
-                new_fdr = st.text_input("New FDR Number")
-                da = st.number_input("New Deposit Amount (DA)", min_value=0.0)
-                ma = st.number_input("New Maturity Amount (MA)", min_value=0.0)
-                da_date = st.date_input("New Deposit Date")
-                ma_date = st.date_input("New Maturity Date")
-                interest = st.number_input("New Interest Amount", min_value=0.0)
-                submit_renew = st.form_submit_button("Renew FD")
-                if submit_renew:
-                    idx = renewal_found.index[0]
-                    df.loc[idx, 'DA'] = da
-                    df.loc[idx, 'MA'] = ma
-                    df.loc[idx, 'DA_Date'] = pd.to_datetime(da_date)
-                    df.loc[idx, 'Interest'] = interest
-                    df.loc[idx, 'MA_Date'] = pd.to_datetime(ma_date)
-                    df.loc[idx, 'FDR_NO'] = new_fdr
-                    save_data(df)
-                    st.success("FD renewed and updated successfully!")
-        else:
-            st.warning("FDR Number not found. Please check and try again.")
+    st.markdown("**3. Total Maturity Amount (MA) by Customer**")
+    pie3 = px.pie(df, names='Customer', values='MA', title='Maturity Amount by Customer')
+    st.plotly_chart(pie3)
+
+# 🔄 Pivot Table Section
+st.markdown("---")
+if st.checkbox("🧮 Show Pivot Table Analysis"):
+    st.subheader("Interactive Pivot Table")
+    available_cols = df.columns.tolist()
+
+    rows = st.multiselect("Select Row Groups", available_cols, default=['Bank'])
+    cols = st.multiselect("Select Column Groups", available_cols)
+    values = st.multiselect("Select Values", ['DA', 'MA', 'Interest'], default=['DA'])
+    aggfunc = st.selectbox("Aggregation Function", ['sum', 'mean', 'count'])
+
+    if rows and values:
+        pivot = pd.pivot_table(df, index=rows, columns=cols if cols else None,
+                               values=values, aggfunc=aggfunc, fill_value=0, margins=True)
+        st.dataframe(pivot)
 
 # Download updated file
 st.markdown("---")
