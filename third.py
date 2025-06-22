@@ -24,15 +24,13 @@ if not st.session_state.authenticated:
 
     st.stop()
 
-
-
 # ⬇️ Upload file at the top level
 uploaded_file = st.file_uploader("📁 Upload FD Excel File", type=["xlsx"])
 
 # ⬇️ Only proceed if file is uploaded
 if uploaded_file is not None:
-    def load_data(uploaded_file):
-        df = pd.read_excel(uploaded_file, sheet_name=0)
+    def load_data(file):
+        df = pd.read_excel(file, sheet_name=0)
         df = df.rename(columns={
             'Bank Name': 'Bank',
             'fisrt Name': 'Initial',
@@ -53,22 +51,14 @@ if uploaded_file is not None:
             df['MA_Date'] = df['DA_Date'] + pd.DateOffset(months=60)
         return df
 
-    # ⬇️ Call loader with uploaded file
     df = load_data(uploaded_file)
-
 else:
     st.warning("Please upload the FD Excel file to proceed.")
     st.stop()
 
-
-
 # Save Data
-
 def save_data(df):
     df.to_excel("fdr.xlsx", index=False)
-
-# Load current FD data
-df = load_data()
 
 # Filter by Customer Name or "ALL"
 name_input = st.text_input("Enter Customer Name or Initial (e.g., V or Vishalbhai or ALL):").strip().upper()
