@@ -115,6 +115,7 @@ if st.checkbox("📈 Show Comparative Analysis"):
     st.plotly_chart(pie3)
 
 # 🔄 Pivot Table Section
+# 🔄 Pivot Table Section
 st.markdown("---")
 if st.checkbox("🕲 Show Pivot Table Analysis"):
     st.subheader("Interactive Pivot Table")
@@ -122,63 +123,59 @@ if st.checkbox("🕲 Show Pivot Table Analysis"):
 
     rows = st.multiselect("Select Row Groups", available_cols, default=['Bank', 'Customer'])
     cols = st.multiselect("Select Column Groups", available_cols)
-    values = st.multiselect("Select Values", ['DA', 'MA', 'Interest'], default=['DA'])
+    values = st.multiselect("Select Values", ['DA', 'MA', 'Interest'], default=['DA', 'MA', 'Interest'])
     aggfunc = st.selectbox("Aggregation Function", ['sum', 'mean', 'count'])
 
-if rows and values:
-    pivot = pd.pivot_table(
-        df,
-        index=rows,
-        columns=cols if cols else None,
-        values=values,
-        aggfunc=aggfunc,
-        fill_value=0,
-        margins=True,
-        margins_name="Grand Total"
-    )
-
-    # Ensure DA, MA, Interest order
-    ordered_values = ['DA', 'MA', 'Interest']
-    if isinstance(pivot.columns, pd.MultiIndex):
-        pivot = pivot.reindex(
-            columns=[col for col in pivot.columns if col[0] in ordered_values],
-            level=0
+    if rows and values:
+        # Pivot logic starts here
+        pivot = pd.pivot_table(
+            df,
+            index=rows,
+            columns=cols if cols else None,
+            values=values,
+            aggfunc=aggfunc,
+            fill_value=0,
+            margins=True,
+            margins_name="Grand Total"
         )
-    else:
-        pivot = pivot[[col for col in ordered_values if col in pivot.columns]]
 
-    # Subtotals for 'Bank' and 'Customer'
-    if 'Bank' in pivot.index.names and 'Customer' in pivot.index.names and aggfunc == 'sum':
-        pivot = pivot.reset_index()
-        subtotals = []
-        for bank, group in pivot.groupby('Bank', sort=False):
-            subtotals.append(group)
-            subtotal_data = {
-                'Bank': bank,
-                'Customer': f"{bank} Total"
-            }
-            subtotal_data.update({
-                col: group[col].sum() for col in group.columns if col not in ['Bank', 'Customer']
-            })
-            subtotal_row = pd.DataFrame([subtotal_data])
-            subtotals.append(subtotal_row)
-        pivot = pd.concat(subtotals, ignore_index=True)
+        # Reorder columns to ensure DA, MA, Interest
+        ordered_values = ['DA', 'MA', 'Interest']
+        if isinstance(pivot.columns, pd.MultiIndex):
+            pivot = pivot.reindex(
+                columns=[col for col in pivot.columns if col[0] in ordered_values],
+                level=0
+            )
+        else:
+            pivot = pivot[[col for col in ordered_values if col in pivot.columns]]
 
-    st.dataframe(pivot, use_container_width=True, hide_index=True)
+        # Add Subtotals by Bank
+        if 'Bank' in pivot.index.names and 'Customer' in pivot.index.names and aggfunc == 'sum':
+            pivot = pivot.reset_index()
+            subtotals = []
+            for bank, group in pivot.groupby('Bank', sort=False):
+                subtotals.append(group)
+                subtotal_data = {
+                    'Bank': bank,
+                    'Customer': f"{bank} Total"
+                }
+                subtotal_data.update({
+                    col: group[col].sum() for col in group.columns if col not in ['Bank', 'Customer']
+                })
+                subtotal_row = pd.DataFrame([subtotal_data])
+                subtotals.append(subtotal_row)
+            pivot = pd.concat(subtotals, ignore_index=True)
 
+        st.dataframe(pivot, use_container_width=True, hide_index=True)
 
-# Download updated file
-st.markdown("---")
-st.subheader("Download Updated FD Database")
-
-output = io.BytesIO()
-with pd.ExcelWriter(output, engine='openpyxl') as writer:
-    df.to_excel(writer, index=False)
-output.seek(0)
-
-st.download_button(
-    label="📅 Download FD Data as Excel",
-    data=output,
-    file_name="updated_fdr.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+        # Optional: XLSX Download
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            pivot.to_excel(writer, index=False)
+        output.seek(0)
+        st.download_button(
+            label="📥 Download Pivot Table as Excel",
+            data=output,
+            file_name="pivot_table.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
