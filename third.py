@@ -124,6 +124,7 @@ if st.checkbox("🕲 Show Pivot Table Analysis"):
     cols = st.multiselect("Select Column Groups", available_cols)
     values = st.multiselect("Select Values", ['DA', 'MA', 'Interest'], default=['DA'])
     aggfunc = st.selectbox("Aggregation Function", ['sum', 'mean', 'count'])
+
 if rows and values:
     pivot = pd.pivot_table(
         df,
@@ -136,7 +137,7 @@ if rows and values:
         margins_name="Grand Total"
     )
 
-    # Reorder columns if all 3 are selected (DA, MA, Interest)
+    # Reorder value columns: DA, MA, Interest
     ordered_values = ['DA', 'MA', 'Interest']
     if isinstance(pivot.columns, pd.MultiIndex):
         pivot = pivot.reindex(
@@ -146,8 +147,9 @@ if rows and values:
     else:
         pivot = pivot[[col for col in ordered_values if col in pivot.columns]]
 
+    # Inject subtotals only if rows = ['Bank', 'Customer']
     if rows == ['Bank', 'Customer'] and aggfunc == 'sum':
-        pivot = pivot.reset_index(drop=True)
+        pivot = pivot.reset_index()  # Don't drop index here!
         subtotals = []
         for bank, group in pivot.groupby('Bank', sort=False):
             subtotals.append(group)
@@ -160,6 +162,7 @@ if rows and values:
         pivot = pd.concat(subtotals, ignore_index=True)
 
     st.dataframe(pivot, use_container_width=True, hide_index=True)
+
 
 
 # Download updated file
