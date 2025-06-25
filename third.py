@@ -157,7 +157,7 @@ if rows and values:
                 'Bank': bank,
                 'Customer': f"{bank} Total",
                 **{col: group[col].sum() for col in group.columns if col not in ['Bank', 'Customer']}
-
+            }
 
 
 # Download updated file
