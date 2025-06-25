@@ -137,7 +137,7 @@ if rows and values:
         margins_name="Grand Total"
     )
 
-    # Reorder value columns: DA, MA, Interest
+    # Reorder columns to DA, MA, Interest
     ordered_values = ['DA', 'MA', 'Interest']
     if isinstance(pivot.columns, pd.MultiIndex):
         pivot = pivot.reindex(
@@ -147,9 +147,9 @@ if rows and values:
     else:
         pivot = pivot[[col for col in ordered_values if col in pivot.columns]]
 
-    # Inject subtotals only if rows = ['Bank', 'Customer']
-    if rows == ['Bank', 'Customer'] and aggfunc == 'sum':
-        pivot = pivot.reset_index()  # Don't drop index here!
+    # Inject subtotals if Bank and Customer are both in the index
+    if 'Bank' in pivot.index.names and 'Customer' in pivot.index.names and aggfunc == 'sum':
+        pivot = pivot.reset_index()  # Now it's safe
         subtotals = []
         for bank, group in pivot.groupby('Bank', sort=False):
             subtotals.append(group)
@@ -157,11 +157,6 @@ if rows and values:
                 'Bank': bank,
                 'Customer': f"{bank} Total",
                 **{col: group[col].sum() for col in group.columns if col not in ['Bank', 'Customer']}
-            }])
-            subtotals.append(subtotal_row)
-        pivot = pd.concat(subtotals, ignore_index=True)
-
-    st.dataframe(pivot, use_container_width=True, hide_index=True)
 
 
 
