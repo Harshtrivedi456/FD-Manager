@@ -124,33 +124,43 @@ if st.checkbox("🕲 Show Pivot Table Analysis"):
     cols = st.multiselect("Select Column Groups", available_cols)
     values = st.multiselect("Select Values", ['DA', 'MA', 'Interest'], default=['DA'])
     aggfunc = st.selectbox("Aggregation Function", ['sum', 'mean', 'count'])
+if rows and values:
+    pivot = pd.pivot_table(
+        df,
+        index=rows,
+        columns=cols if cols else None,
+        values=values,
+        aggfunc=aggfunc,
+        fill_value=0,
+        margins=True,
+        margins_name="Grand Total"
+    )
 
-    if rows and values:
-        pivot = pd.pivot_table(
-            df,
-            index=rows,
-            columns=cols if cols else None,
-            values=values,
-            aggfunc=aggfunc,
-            fill_value=0,
-            margins=True,
-            margins_name="Grand Total"
+    # Reorder columns if all 3 are selected (DA, MA, Interest)
+    ordered_values = ['DA', 'MA', 'Interest']
+    if isinstance(pivot.columns, pd.MultiIndex):
+        pivot = pivot.reindex(
+            columns=[col for col in pivot.columns if col[0] in ordered_values],
+            level=0
         )
+    else:
+        pivot = pivot[[col for col in ordered_values if col in pivot.columns]]
 
-        if rows == ['Bank', 'Customer'] and aggfunc == 'sum':
-            pivot = pivot.reset_index()
-            subtotals = []
-            for bank, group in pivot.groupby('Bank'):
-                subtotals.append(group)
-                subtotal_row = pd.DataFrame([{
-                    'Bank': bank,
-                    'Customer': f"{bank} Total",
-                    **{col: group[col].sum() for col in group.columns if col not in ['Bank', 'Customer']}
-                }])
-                subtotals.append(subtotal_row)
-            pivot = pd.concat(subtotals, ignore_index=True)
+    if rows == ['Bank', 'Customer'] and aggfunc == 'sum':
+        pivot = pivot.reset_index(drop=True)
+        subtotals = []
+        for bank, group in pivot.groupby('Bank', sort=False):
+            subtotals.append(group)
+            subtotal_row = pd.DataFrame([{
+                'Bank': bank,
+                'Customer': f"{bank} Total",
+                **{col: group[col].sum() for col in group.columns if col not in ['Bank', 'Customer']}
+            }])
+            subtotals.append(subtotal_row)
+        pivot = pd.concat(subtotals, ignore_index=True)
 
-        st.dataframe(pivot)
+    st.dataframe(pivot, use_container_width=True, hide_index=True)
+
 
 # Download updated file
 st.markdown("---")
