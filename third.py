@@ -4,26 +4,26 @@ from datetime import datetime, timedelta
 import io
 import plotly.express as px
 
-# 🔐 Password Protection
-st.title("FD Manager")
+# # 🔐 Password Protection
+# st.title("FD Manager")
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-    st.session_state.attempted = False
+# if "authenticated" not in st.session_state:
+#     st.session_state.authenticated = False
+#     st.session_state.attempted = False
 
-if not st.session_state.authenticated:
-    with st.form("auth_form"):
-        password = st.text_input("Enter Password to Access App", type="password")
-        submitted = st.form_submit_button("Login")
-        if submitted:
-            st.session_state.attempted = True
-            if password == "mysecurepass":
-                st.session_state.authenticated = True
+# if not st.session_state.authenticated:
+#     with st.form("auth_form"):
+#         password = st.text_input("Enter Password to Access App", type="password")
+#         submitted = st.form_submit_button("Login")
+#         if submitted:
+#             st.session_state.attempted = True
+#             if password == "mysecurepass":
+#                 st.session_state.authenticated = True
 
-    if st.session_state.attempted and not st.session_state.authenticated:
-        st.warning("Incorrect password. Please try again.")
+#     if st.session_state.attempted and not st.session_state.authenticated:
+#         st.warning("Incorrect password. Please try again.")
 
-    st.stop()
+#     st.stop()
 
 # ⬇️ Upload file at the top level
 uploaded_file = st.file_uploader("📁 Upload FD Excel File", type=["xlsx"])
